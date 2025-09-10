@@ -1,4 +1,4 @@
-name: .NET Build PR Check
+﻿name: .NET Build PR Check
 
 on:
   pull_request:
@@ -22,3 +22,24 @@ jobs:
 
       - name: Build
         run: dotnet build --no-restore --configuration Release
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: build
+    if: always()
+    steps:
+      - name: Notify Discord
+        run: |
+          STATUS="${{ needs.build.result }}"
+          ICON="⚠️"
+
+          if [ "$STATUS" = "success" ]; then
+            ICON="✅"
+          elif [ "$STATUS" = "failure" ]; then
+            ICON="❌"
+          fi
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\": \"🔔 PR Build finished with status: ${ICON} ${STATUS} (by Natalie)\"}" \
+               https://discord.com/api/webhooks/1414125419610771466/Xkb9ADuwivDV3vwW0fl-pjpA_bSoq7GRFHfhTucFBAsoAx7TFNW7XPGArLLQESICpfvL
